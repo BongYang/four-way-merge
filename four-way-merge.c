@@ -4,7 +4,6 @@
 #include <time.h>
 #include <math.h>
 #define SWAP(x,y,t) ((t)=(x),(x)=(y),(y)=(t))
-#define RUNMAX 8
 #define MAX_TREE_SIZE 8
 #define Total 2000000
 
@@ -76,13 +75,6 @@ void MergeSort(int arr[], int left, int right) {
     }
 }
 
-int pow2(int NumbeOfWay)
-{
-    int log2OfWay = (int)log2(NumbeOfWay);
-    int res = (int)pow(2, log2OfWay + 1);
-    return res;
-}
-
 void WinnerTreeInit(Wtree *pWtree, int k)
 {
     int ClosedNumber = 4;
@@ -151,106 +143,8 @@ void closeFile(FILE* fp[],int KeyCount,int NumberOfRun,int tempIndex){
         fclose(fp[j]);
     }
 }
-void MakeWinnerTree(Wtree *pWtree, FILE *fpArray[], double NumberOfWay,  char finalFileName[])
-{
-    int i, LeftChild, RightChild, min = -1;
-    int ClosedNumber = 4;
-    int KeyCount = 1024; // 1024
-//    pow2(NumberOfWay);// NumberOfWay = 1954 //
-    int count = 0;
-    FILE *fp_final;
-    FILE *ftemp[2];
-    int tempIndex = 1;
-    
-    ftemp[0] = fopen("temp0.dat","rb");
-    ftemp[1] = fopen("temp1.dat","wb");
-    fp_final = fopen(finalFileName, "wb");
-    
-    while(1){
-        if( NumberOfWay == 1 ) // 마지막;
-            break;
-        
-        makeFP(fpArray, KeyCount, NumberOfWay,tempIndex);
-        WinnerTreeInit(pWtree, NumberOfWay);
-        
-        for (i = ClosedNumber; i <= 2 * ClosedNumber - 1; i++)//heap에 밑부분 만들기
-            if (i - ClosedNumber < NumberOfWay)
-                fread(&pWtree->WtreeArray[i].num, sizeof(int), 1, fpArray[i - ClosedNumber]);
-            else pWtree->WtreeArray[i].num = -1;
-        
-        while (1)
-        {
-            for (i = ClosedNumber - 1; i >= 1; i--) {
-                LeftChild = GetLeftChildIndex(i);
-                RightChild = GetRightChildIndex(i);
-                int LeftChildNode = pWtree->WtreeArray[LeftChild].num;
-                int RightChildNode = pWtree->WtreeArray[RightChild].num;
-                if (LeftChildNode < RightChildNode)
-                    if (LeftChildNode == -1)
-                        pWtree->WtreeArray[i] = pWtree->WtreeArray[RightChild];
-                    else
-                        pWtree->WtreeArray[i] = pWtree->WtreeArray[LeftChild];
-                
-                    else
-                        if (RightChildNode == -1)
-                            pWtree->WtreeArray[i] = pWtree->WtreeArray[LeftChild];
-                        else
-                            pWtree->WtreeArray[i] = pWtree->WtreeArray[RightChild];
-            }
-            
-            if (pWtree->WtreeArray[1].num == -1){
-                pWtree->WtreeArray[4].runNum += ClosedNumber;
-                pWtree->WtreeArray[5].runNum += ClosedNumber;
-                pWtree->WtreeArray[6].runNum += ClosedNumber;
-                pWtree->WtreeArray[7].runNum += ClosedNumber;
-                fwrite(&min, sizeof(int), 1, ftemp[tempIndex]);
-                if( pWtree->WtreeArray[4].runNum >= NumberOfWay && pWtree->WtreeArray[5].runNum >= NumberOfWay && pWtree->WtreeArray[6].runNum >= NumberOfWay && pWtree->WtreeArray[7].runNum >= NumberOfWay)
-                {
-                    if( tempIndex == 1 ){
-                        tempIndex = 0;
-                        fclose(ftemp[0]);
-                        fclose(ftemp[1]);
-                        ftemp[0] = fopen("temp0.dat", "wb");
-                        ftemp[1] = fopen("temp1.dat", "rb");
-                        readFile(KeyCount, NumberOfWay,"temp1.dat");
-                    }
-                    else if(tempIndex == 0){
-                        tempIndex = 1;
-                        fclose(ftemp[0]);
-                        fclose(ftemp[1]);
-                        ftemp[0] = fopen("temp0.dat", "rb");
-                        ftemp[1] = fopen("temp1.dat", "wb");
-                        readFile(KeyCount, NumberOfWay,"temp0.dat");
-                    }
-                    closeFile(fpArray, KeyCount, NumberOfWay, tempIndex);
-                    KeyCount = KeyCount * 4; // 만들어지는 런의 크기
-                    NumberOfWay = NumberOfWay / 4; // 만들어지는 런의 갯수
-                    NumberOfWay = floor(NumberOfWay + 0.5);
-                    break;
-                }
-                continue;
-            }
-            if( count == 4096 )
-                printf("");
-            fwrite(&pWtree->WtreeArray[1].num, sizeof(int), 1, ftemp[tempIndex]);
-            int runIndex = pWtree->WtreeArray[1].runNum;
-            int t;
-            if (pWtree->WtreeArray[runIndex % ClosedNumber + ClosedNumber].num == -1)
-                pWtree->WtreeArray[runIndex + ClosedNumber].num = -1;
-            else {
-                fread(&t, sizeof(int), 1, fpArray[runIndex]);
-                pWtree->WtreeArray[runIndex % ClosedNumber + ClosedNumber].num = t;
-            }
-            count++;
-        }
-        count = 0;
-        closeFile(fpArray, KeyCount, NumberOfWay, tempIndex);
-//        fwrite(&min, sizeof(int), 1, ftemp[tempIndex]);
-    }
 
-    fclose(fp_final);
-}
-void MakeWinnerTree2(Wtree *pWtree, double NumberOfWay, char finalFileName[])
+void MakeWinnerTree(Wtree *pWtree, double NumberOfWay, char finalFileName[])
 {
     FILE *fpArray[2][1958] = {{0},{0}};
     int i, j, LeftChild, RightChild;
@@ -272,7 +166,6 @@ void MakeWinnerTree2(Wtree *pWtree, double NumberOfWay, char finalFileName[])
             break;
         
         WinnerTreeInit(pWtree, 4);
-//        makeFP(fpArray, KeyCount, NumberOfWay, tempIndex);
         makeFP(fpArray[tempIndex], KeyCount, NumberOfWay, tempIndex);
 
         
@@ -421,7 +314,7 @@ void func2(int NumberOfRun, char finalFileName[]) {
     Wtree WinnerTreePtr;
 //    WinnerTreeInit(&WinnerTreePtr, NumberOfRun);
 //    makeFP(fp, KeyCount, NumberOfRun);
-    MakeWinnerTree2(&WinnerTreePtr, NumberOfRun, finalFileName);
+    MakeWinnerTree(&WinnerTreePtr, NumberOfRun, finalFileName);
 }
 void printFin(char *finalFileName) {
     FILE *fp_final;
